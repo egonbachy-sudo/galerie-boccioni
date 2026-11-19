@@ -14,7 +14,8 @@
     --papier: #f4efe6;
     --encre: #2b1d1f;
   }
-  * { box-sizing: border-box; cursor: none !important; }
+  /* pas de sélection bleue ni de glisser d'image quand on clique vite */
+  * { box-sizing: border-box; cursor: none !important; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; background: #070103; color: var(--papier); font: 400 1.15rem/1.45 Spectral, Georgia, serif; overflow: hidden; }
   button { font: inherit; }
 
@@ -41,9 +42,26 @@
   .couche.on { opacity: 1; visibility: visible; }
 
   #titre { display: grid; place-content: center; text-align: center; background: radial-gradient(circle, rgba(42, 5, 8, .55), rgba(7, 1, 3, .9)); }
-  #titre h1, #fin h1 { font: 700 clamp(2rem, 5vw, 4.2rem)/1.05 Cinzel, serif; margin: 0 0 .4em; letter-spacing: .06em;
+  #titre h1 { font: 700 clamp(2rem, 5vw, 4.2rem)/1.05 Cinzel, serif; margin: 0 0 .4em; letter-spacing: .06em;
     color: #fff3ea; text-shadow: 0 0 24px rgba(227, 38, 47, .8); }
-  #titre p, #fin p { margin: 0 0 2em; font-style: italic; opacity: .85; }
+  #titre p { margin: 0 0 2em; font-style: italic; opacity: .85; }
+  #titre #merci { margin: 0 0 1em; font: 500 1rem Cinzel, serif; letter-spacing: .3em; text-transform: uppercase; color: var(--or); font-style: normal; }
+  .boutons { display: flex; gap: 1em; justify-content: center; }
+  .credits { margin-top: 3em; opacity: .5; font-size: .75rem; }
+
+  #personas { display: flex; flex-direction: column; align-items: center; padding: 3% 4%; z-index: 8;
+    background: radial-gradient(ellipse at 50% 20%, #50080e, #070103 75%); }
+  #personas h2 { font: 700 clamp(1.6rem, 3vw, 2.6rem) Cinzel, serif; margin: 0 0 .6em; letter-spacing: .06em; }
+  .fiches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5%; width: 100%; flex: 1; min-height: 0; margin-bottom: 1.2em; }
+  .fiches article { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.2em 1.4em;
+    background: rgba(20, 3, 6, .7); border: 1px solid rgba(227, 38, 47, .55); border-radius: 6px; font-size: .95rem; }
+  .fiches img { height: 30vh; margin-bottom: .6em; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6)); }
+  .fiches h3 { font: 700 1.4rem Cinzel, serif; margin: 0; }
+  .fiches h3 span { color: var(--rouge); }
+  .fiches .role { font: 500 .8rem Cinzel, serif; letter-spacing: .25em; text-transform: uppercase; color: var(--or); margin-bottom: .6em; }
+  .fiches p { margin: .3em 0; text-align: left; line-height: 1.35; }
+  .fiches b { color: #f3c2a8; font-weight: 600; }
+  .fiches blockquote { margin: auto 0 0; padding-top: .7em; font-style: italic; opacity: .85; }
   .bouton { justify-self: center; padding: .6em 1.8em; border: 1px solid var(--or); background: rgba(42, 5, 8, .7); color: var(--or);
     font-family: Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; font-size: .95rem; transition: background .2s, color .2s; }
   .bouton:hover, .bouton:focus-visible { background: var(--or); color: var(--rouge-sombre); outline: none; }
@@ -74,7 +92,6 @@
   #dialogue:not(.on) #bulle { opacity: 0; }
 
   #retour { position: absolute; inset: 2.5% 1.5% auto auto; z-index: 6; font-size: .7rem; padding: .45em 1.1em; }
-  #fin { display: grid; place-content: center; text-align: center; background: rgba(7, 1, 3, .88); z-index: 7; }
 
   /* ---------- la main remplace la souris ---------- */
   #main { position: fixed; left: 0; top: 0; height: 84px; z-index: 99; pointer-events: none; translate: -21px -1px; opacity: 0;
@@ -92,9 +109,48 @@
   </div>
 
   <div id="titre" class="couche on">
+    <p id="merci" hidden>Merci de votre visite !</p>
     <h1>La Galerie du Temps</h1>
     <p>Umberto Boccioni et le futurisme — une visite en sept tableaux</p>
-    <button class="bouton" id="entrer">Entrer</button>
+    <div class="boutons">
+      <button class="bouton" id="entrer">Entrer</button>
+      <button class="bouton" id="voir-personas">Les personnages</button>
+    </div>
+    <small class="credits">Projet scolaire non commercial · Œuvres d'Umberto Boccioni (domaine public) · Décor et main : Genshin Impact © HoYoverse</small>
+  </div>
+
+  <div id="personas" class="couche">
+    <h2>Les personnages</h2>
+    <div class="fiches">
+      <article>
+        <img src="img/hugo.png" alt="Hugo, tête en triangle">
+        <h3>Hugo <span>△</span></h3>
+        <div class="role">L'artiste</div>
+        <p><b>Caractère :</b> passionné, impulsif, toujours enthousiaste. Il s'enflamme devant chaque toile.</p>
+        <p><b>Dans la visite :</b> il ressent les œuvres et fait voir l'énergie, la vitesse, le mouvement.</p>
+        <p><b>Sa forme :</b> un triangle, pointu et tourné vers l'avant, comme son élan.</p>
+        <blockquote>« On entend presque le vacarme ! »</blockquote>
+      </article>
+      <article>
+        <img src="img/claire.png" alt="Claire, tête carrée">
+        <h3>Claire <span>▢</span></h3>
+        <div class="role">La critique d'art</div>
+        <p><b>Caractère :</b> posée, précise, un brin sceptique et pince-sans-rire.</p>
+        <p><b>Dans la visite :</b> elle donne les titres, les dates, les lieux et le contexte historique.</p>
+        <p><b>Sa forme :</b> un carré, stable et structuré, comme ses explications.</p>
+        <blockquote>« Ironique, de les exposer dans une galerie, non ? »</blockquote>
+      </article>
+      <article>
+        <img src="img/lou.png" alt="Lou, tête ronde">
+        <h3>Lou <span>◯</span></h3>
+        <div class="role">La visiteuse</div>
+        <p><b>Caractère :</b> curieuse, spontanée et drôle. Elle découvre le futurisme pour la première fois.</p>
+        <p><b>Dans la visite :</b> elle pose les questions que le public se pose et compare tout à la vie de tous les jours.</p>
+        <p><b>Sa forme :</b> un rond, doux et ouvert, comme sa curiosité.</p>
+        <blockquote>« Un peu comme quand le métro arrive et que tout le monde pousse… »</blockquote>
+      </article>
+    </div>
+    <button class="bouton" id="fermer-personas">Retour à l'accueil</button>
   </div>
 
   <div id="histoire" class="couche">
@@ -114,13 +170,6 @@
       <img src="img/claire.png" alt="Claire, tête carrée" data-qui="C">
       <img src="img/lou.png" alt="Lou, tête ronde" data-qui="L">
     </div>
-  </div>
-
-  <div id="fin" class="couche">
-    <h1>Fin de la visite</h1>
-    <p>Merci d'avoir suivi Hugo, Claire et Lou dans la Galerie du Temps.</p>
-    <button class="bouton" id="recommencer">Recommencer</button>
-    <small style="margin-top: 3em; opacity: .5; font-size: .75rem;">Projet scolaire non commercial · Œuvres d'Umberto Boccioni (domaine public) · Décor et main : Genshin Impact © HoYoverse</small>
   </div>
 </div>
 <img id="main" src="img/main.png" alt="">
@@ -296,7 +345,7 @@ $("#retour").addEventListener("click", () => {
   majCadres();
   if (progres === OEUVRES.length && !fini) {
     fini = true;
-    setTimeout(() => { monde.classList.add("flou"); parler(FINALE, () => $("#fin").classList.add("on")); }, 1400);
+    setTimeout(() => { monde.classList.add("flou"); parler(FINALE, retourAccueil); }, 1400);
   }
 });
 let fini = false;
@@ -306,13 +355,14 @@ $("#entrer").addEventListener("click", () => {
   $("#titre").classList.remove("on");
   parler(INTRO, () => { monde.classList.remove("flou"); majCadres(); });
 });
-$("#recommencer").addEventListener("click", () => {
+function retourAccueil() {
   progres = 0; fini = false;
-  $("#fin").classList.remove("on");
-  monde.classList.add("flou");
   majCadres();
-  parler(INTRO.slice(-1), () => { monde.classList.remove("flou"); majCadres(); });
-});
+  $("#merci").hidden = false;
+  $("#titre").classList.add("on");
+}
+$("#voir-personas").addEventListener("click", () => $("#personas").classList.add("on"));
+$("#fermer-personas").addEventListener("click", () => $("#personas").classList.remove("on"));
 monde.classList.add("flou");
 
 // ---------- la main ----------
