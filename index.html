@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Galerie du Temps</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rouge: #e3262f;
+    --rouge-sombre: #2a0508;
+    --or: #e8c66a;
+    --papier: #f4efe6;
+    --encre: #2b1d1f;
+  }
+  * { box-sizing: border-box; cursor: none !important; }
+  html, body { margin: 0; height: 100%; background: #070103; color: var(--papier); font: 400 1.15rem/1.45 Spectral, Georgia, serif; overflow: hidden; }
+  button { font: inherit; }
+
+  /* ---------- scène 16:9 ---------- */
+  #scene { position: absolute; inset: 0; margin: auto; width: min(100vw, 100vh * 736 / 414); aspect-ratio: 736 / 414; overflow: hidden; }
+  #monde { position: absolute; inset: 0; transform-origin: 0 0; transition: transform 1.4s cubic-bezier(.65, 0, .25, 1), filter 1.4s; }
+  #monde img, #monde svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #monde.flou { filter: brightness(.45) blur(1px); }
+  #scene::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(10, 0, 3, .75) 100%); }
+
+  .cadre { fill: transparent; stroke: transparent; stroke-width: 2.2; stroke-linejoin: round; pointer-events: none; outline: none; transition: fill .3s, stroke .3s; }
+  .cadre.vu { pointer-events: auto; }
+  .cadre.suivant { pointer-events: auto; stroke: #ffd77a; filter: drop-shadow(0 0 3px #ffd77a) drop-shadow(0 0 8px #ffb347); animation: pulse 1.6s ease-in-out infinite; }
+  .cadre.vu:hover, .cadre.suivant:hover, .cadre:focus-visible { fill: rgba(255, 220, 140, .2); stroke: #fff4cf; }
+  @keyframes pulse { 50% { stroke: rgba(255, 215, 122, .25); fill: rgba(255, 215, 122, .12); } }
+
+  .poussiere { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffd9c0; pointer-events: none;
+    box-shadow: 0 0 6px #ff9a7a; opacity: 0; animation: flotte linear infinite; }
+  @keyframes flotte { 10% { opacity: .8; } 90% { opacity: .6; } to { transform: translateY(-38vh); opacity: 0; } }
+
+  /* ---------- écrans par-dessus ---------- */
+  .couche { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .7s, visibility .7s; }
+  .couche.on { opacity: 1; visibility: visible; }
+
+  #titre { display: grid; place-content: center; text-align: center; background: radial-gradient(circle, rgba(42, 5, 8, .55), rgba(7, 1, 3, .9)); }
+  #titre h1, #fin h1 { font: 700 clamp(2rem, 5vw, 4.2rem)/1.05 Cinzel, serif; margin: 0 0 .4em; letter-spacing: .06em;
+    color: #fff3ea; text-shadow: 0 0 24px rgba(227, 38, 47, .8); }
+  #titre p, #fin p { margin: 0 0 2em; font-style: italic; opacity: .85; }
+  .bouton { justify-self: center; padding: .6em 1.8em; border: 1px solid var(--or); background: rgba(42, 5, 8, .7); color: var(--or);
+    font-family: Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; font-size: .95rem; transition: background .2s, color .2s; }
+  .bouton:hover, .bouton:focus-visible { background: var(--or); color: var(--rouge-sombre); outline: none; }
+
+  #histoire { background: radial-gradient(ellipse at 50% 30%, rgba(80, 8, 14, .9), rgba(7, 1, 3, .97) 75%); }
+  #oeuvre { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); text-align: center; width: 92%; }
+  #oeuvre img { max-height: 54vh; max-width: 100%; border: 3px solid var(--rouge); box-shadow: 0 0 0 1px #000, 0 0 40px rgba(227, 38, 47, .55); display: block; margin: 0 auto .7em; }
+  #oeuvre .chapitre { font: 500 .85rem Cinzel, serif; letter-spacing: .3em; color: var(--or); text-transform: uppercase; }
+  #oeuvre h2 { font: italic 600 1.35rem/1.2 Spectral, serif; margin: .15em 0 0; }
+  #oeuvre .infos { font-size: .9rem; opacity: .7; }
+
+  /* ---------- personnages + bulle ---------- */
+  /* personnages rangés sur les côtés ; celui qui parle grandit et s'avance vers le centre */
+  #trio { position: absolute; inset: 0; pointer-events: none; }
+  #trio img { position: absolute; bottom: 0; height: 30%; transform-origin: 50% 100%; transition: transform .4s cubic-bezier(.3, 1.4, .5, 1), filter .35s, opacity .35s;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6)) brightness(.55); opacity: .75; transform: translateY(12%) scale(.9); }
+  #trio [data-qui="H"] { left: 1.5%; --vers: 1; }
+  #trio [data-qui="L"] { left: 10.5%; --vers: 1; }
+  #trio [data-qui="C"] { right: 1.5%; --vers: -1; }
+  #trio img.parle { z-index: 1; filter: drop-shadow(0 0 18px rgba(255, 210, 160, .6)) brightness(1); opacity: 1;
+    transform: translate(calc(var(--vers) * 18%), -6%) scale(1.3) rotate(calc(var(--vers) * 2deg)); }
+  #bulle { position: absolute; bottom: 4%; left: 50%; translate: -50% 0; width: min(54vw, 780px); min-height: 4.6em; padding: .8em 1.3em 1em; background: var(--papier); color: var(--encre);
+    border-radius: 14px; box-shadow: 0 8px 30px rgba(0, 0, 0, .5); transition: opacity .25s; }
+  #bulle .nom { font: 700 .8rem Cinzel, serif; letter-spacing: .15em; text-transform: uppercase; color: #9b1820; }
+  #bulle .suite { position: absolute; right: .8em; bottom: .3em; font-size: .75rem; opacity: .55; animation: cligne 1.2s infinite; }
+  @keyframes cligne { 50% { opacity: .1; } }
+  #dialogue { position: absolute; inset: 0; z-index: 5; }
+  #dialogue:not(.on) #bulle { opacity: 0; }
+
+  #retour { position: absolute; inset: 2.5% 1.5% auto auto; z-index: 6; font-size: .7rem; padding: .45em 1.1em; }
+  #fin { display: grid; place-content: center; text-align: center; background: rgba(7, 1, 3, .88); z-index: 7; }
+
+  /* ---------- la main remplace la souris ---------- */
+  #main { position: fixed; left: 0; top: 0; height: 84px; z-index: 99; pointer-events: none; translate: -21px -1px; opacity: 0;
+    filter: drop-shadow(0 0 6px rgba(255, 200, 120, .45)) drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); transition: scale .15s, filter .15s; transform-origin: 43% 0; }
+  #main.survol { scale: 1.12; filter: drop-shadow(0 0 12px rgba(255, 215, 120, .95)) drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); }
+  #main.clic { scale: .92; }
+  @media (prefers-reduced-motion: reduce) { #monde, .couche, #trio img, #bulle { transition: none; } .poussiere, .cadre.suivant { animation: none; } }
+</style>
+</head>
+<body>
+<div id="scene">
+  <div id="monde">
+    <img src="img/galerie.jpg" alt="Galerie circulaire aux tableaux rouges suspendus">
+    <svg id="cadres" viewBox="0 0 736 414" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div id="titre" class="couche on">
+    <h1>La Galerie du Temps</h1>
+    <p>Umberto Boccioni et le futurisme — une visite en sept tableaux</p>
+    <button class="bouton" id="entrer">Entrer</button>
+  </div>
+
+  <div id="histoire" class="couche">
+    <div id="oeuvre">
+      <img alt="">
+      <div class="chapitre"></div>
+      <h2></h2>
+      <div class="infos"></div>
+    </div>
+    <button class="bouton couche" id="retour">Retour à la galerie</button>
+  </div>
+
+  <div id="dialogue" class="couche">
+    <div id="bulle" aria-live="polite"><div class="nom"></div><div class="texte"></div><span class="suite">▼ clic</span></div>
+    <div id="trio">
+      <img src="img/hugo.png" alt="Hugo, tête en triangle" data-qui="H">
+      <img src="img/claire.png" alt="Claire, tête carrée" data-qui="C">
+      <img src="img/lou.png" alt="Lou, tête ronde" data-qui="L">
+    </div>
+  </div>
+
+  <div id="fin" class="couche">
+    <h1>Fin de la visite</h1>
+    <p>Merci d'avoir suivi Hugo, Claire et Lou dans la Galerie du Temps.</p>
+    <button class="bouton" id="recommencer">Recommencer</button>
+    <small style="margin-top: 3em; opacity: .5; font-size: .75rem;">Projet scolaire non commercial · Œuvres d'Umberto Boccioni (domaine public) · Décor et main : Genshin Impact © HoYoverse</small>
+  </div>
+</div>
+<img id="main" src="img/main.png" alt="">
+
+<script src="img/cadres.js"></script>
+<script>
+const NOMS = { H: "Hugo", C: "Claire", L: "Lou" };
+
+const INTRO = [
+  ["L", "Waouh… Où est-ce qu'on est ? Les tableaux flottent dans le vide !"],
+  ["C", "Bienvenue dans la Galerie du Temps. Ici, chaque cadre garde un moment de l'histoire."],
+  ["H", "Et aujourd'hui, c'est Umberto Boccioni ! Le peintre qui voulait peindre la vitesse elle-même !"],
+  ["C", "Né en 1882, mort en 1916. La figure centrale du futurisme italien."],
+  ["L", "Le futur… isme ? C'est de la science-fiction ?"],
+  ["H", "Presque ! En 1909, les futuristes proclament qu'il faut aimer les machines, la ville, le mouvement… et brûler les musées !"],
+  ["C", "Ironique, de les exposer dans une galerie, non ?"],
+  ["L", "Ha ! Bon, par où on commence ?"],
+  ["C", "Suis la lumière dorée. Les tableaux se visitent dans l'ordre : ensemble, ils racontent une histoire."],
+];
+
+const OEUVRES = [
+  { chapitre: "Avant la vitesse", titre: "Officine a Porta Romana", infos: "1910 · Gallerie d'Italia, Milan", dialogue: [
+    ["L", "On dirait une banlieue tranquille. Des champs, des gens qui se promènent…"],
+    ["C", "C'est la périphérie de Milan, en 1910. Boccioni peint encore en petites touches de couleur pure : c'est le divisionnisme."],
+    ["H", "Mais regarde au fond ! Les cheminées, les immeubles neufs… L'usine arrive."],
+    ["L", "Donc c'est le calme avant la tempête ?"],
+    ["H", "Exactement. La ville avale la campagne, et Boccioni sent que tout va accélérer."],
+    ["C", "C'est l'une de ses dernières toiles « sages ». Juste après, il change tout."],
+    ["L", "Le dernier jour avant la vitesse… J'aime bien."],
+  ]},
+  { chapitre: "La ville se lève", titre: "La città che sale", infos: "1910-1911 · Museum of Modern Art, New York", dialogue: [
+    ["L", "Whoa ! C'est quoi ce cheval rouge géant ?!"],
+    ["H", "C'est l'énergie ! La ville en chantier, les ouvriers, les chevaux qui tirent… tout se tord sous l'effort !"],
+    ["C", "« La ville qui monte ». On la considère comme la première grande toile vraiment futuriste de Boccioni."],
+    ["L", "On ne voit presque pas les maisons, c'est flou partout."],
+    ["C", "Les immeubles et les échafaudages sont tout en haut, à peine esquissés. Le sujet, c'est le travail, pas les bâtiments."],
+    ["H", "Les hommes se penchent, le cheval se cabre… On entend presque le vacarme !"],
+    ["L", "La ville ne se construit pas : elle explose vers le ciel."],
+  ]},
+  { chapitre: "La foule", titre: "Rissa in galleria", infos: "1910 · Pinacoteca di Brera, Milan", dialogue: [
+    ["L", "Il y a plein de gens qui courent… Mais vers où ?"],
+    ["C", "« Rixe dans la galerie ». Une bagarre devant un café de la galerie Victor-Emmanuel, à Milan."],
+    ["H", "Regarde les lampes électriques ! La nuit n'existe plus : la ville brille tout le temps."],
+    ["L", "Et du coup, tout le monde devient fou ?"],
+    ["H", "La foule réagit comme un seul corps. Un cri, et tout le monde se précipite !"],
+    ["C", "Boccioni découvre un nouveau sujet : la masse. Les individus disparaissent dans le mouvement collectif."],
+    ["L", "Un peu comme quand le métro arrive et que tout le monde pousse…"],
+    ["C", "… Oui. Exactement comme ça."],
+  ]},
+  { chapitre: "Le bruit entre", titre: "La strada entra nella casa", infos: "1911 · Sprengel Museum, Hanovre", dialogue: [
+    ["L", "La dame sur le balcon, elle regarde quoi ?"],
+    ["C", "« La rue entre dans la maison ». Une femme penchée à son balcon, et en bas, un chantier."],
+    ["H", "Mais regarde les maisons : elles basculent vers elle ! Le bruit de la rue monte et envahit tout."],
+    ["L", "Les immeubles qui tombent… Ça donne le vertige."],
+    ["C", "Boccioni veut peindre ce qu'on ressent, pas seulement ce qu'on voit. Le son, la lumière et le mouvement se mélangent."],
+    ["H", "C'est ça, le futurisme : mettre le spectateur au centre du tableau !"],
+    ["L", "Donc la ville ne reste plus dehors. Elle rentre chez nous."],
+  ]},
+  { chapitre: "Les adieux", titre: "Stati d'animo I : Gli addii", infos: "1911, première version · Museo del Novecento, Milan", dialogue: [
+    ["L", "C'est plus sombre… La forme noire en haut, c'est un train ?"],
+    ["C", "Oui. « États d'âme I : Les adieux ». Le premier tableau d'un triptyque sur une gare."],
+    ["H", "La fumée, les wagons, les gens qui s'enlacent… Tout tourbillonne autour de la machine."],
+    ["L", "Les vagues vertes, ce sont des gens ?"],
+    ["C", "Des couples qui se disent au revoir. Boccioni ne peint plus des objets : il peint des émotions."],
+    ["H", "Les deux autres toiles s'appellent « Ceux qui partent » et « Ceux qui restent ». Le progrès emporte… mais il sépare aussi."],
+    ["L", "C'est la première fois que la vitesse a l'air… triste."],
+  ]},
+  { chapitre: "La vitesse", titre: "Dinamismo di un ciclista", infos: "1913 · Collection Mattioli, Peggy Guggenheim, Venise", dialogue: [
+    ["L", "Là, je ne vois plus rien. Juste des couleurs qui foncent !"],
+    ["C", "« Dynamisme d'un cycliste ». Il y a bien un cycliste, penché sur son guidon."],
+    ["H", "On ne voit plus le vélo : on voit la vitesse ! Le corps et la machine ne font plus qu'un."],
+    ["L", "Ah oui ! Là, le dos courbé… et là, les roues !"],
+    ["C", "Boccioni appelle ça le « dynamisme plastique » : montrer un objet et sa trajectoire en même temps."],
+    ["H", "Le rêve futuriste : un homme devenu mouvement pur."],
+    ["L", "Il va si vite qu'il disparaît dans le tableau…"],
+  ]},
+  { chapitre: "Continuer", titre: "Forme uniche della continuità nello spazio", infos: "1913 · bronze coulé en 1931 · Metropolitan Museum of Art, New York", dialogue: [
+    ["L", "Une statue ! On dirait qu'elle marche contre le vent."],
+    ["C", "« Formes uniques de la continuité dans l'espace ». Le chef-d'œuvre de Boccioni."],
+    ["H", "Il a sculpté le mouvement lui-même ! Le corps s'étire, l'air se déchire autour de lui."],
+    ["L", "Elle n'a ni bras ni visage… et pourtant elle avance."],
+    ["C", "L'original en plâtre est à São Paulo. Les bronzes ont été coulés après la mort de Boccioni."],
+    ["L", "Après sa mort ?"],
+    ["C", "En 1915, les futuristes partent à la guerre qu'ils avaient célébrée. Boccioni meurt en 1916, à 33 ans, après une chute de cheval."],
+    ["H", "… Lui qui aimait tant la vitesse."],
+    ["L", "Mais sa statue, elle, continue d'avancer."],
+    ["C", "On la retrouve aujourd'hui sur la pièce italienne de 20 centimes."],
+  ]},
+];
+
+const FINALE = [
+  ["L", "C'est déjà fini ?"],
+  ["H", "Sept tableaux, et on est passés d'une banlieue tranquille à un homme fait de vitesse !"],
+  ["C", "C'est toute l'histoire du futurisme : l'enthousiasme pour le monde moderne… et ce qu'il a coûté."],
+  ["L", "Moi, je retiens qu'une peinture peut bouger. Même accrochée à un mur."],
+  ["H", "Boccioni serait content. Enfin… tant qu'on ne l'enferme pas dans un musée."],
+  ["C", "Il faudra qu'on reparle de cette contradiction."],
+  ["L", "Une autre fois ! Allez, on revient ?"],
+];
+
+const $ = s => document.querySelector(s);
+const scene = $("#scene"), monde = $("#monde"), svg = $("#cadres");
+let progres = 0;          // nombre de tableaux déjà vus
+let file = [], apres;     // répliques en cours, action à la fin
+
+// ---------- cadres cliquables ----------
+const polys = CADRES.map((q, i) => {
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+  p.setAttribute("points", q.join(" "));
+  p.setAttribute("class", "cadre");
+  p.setAttribute("tabindex", "-1");
+  p.setAttribute("role", "button");
+  p.setAttribute("aria-label", `Tableau ${i + 1} : ${OEUVRES[i].titre}`);
+  p.addEventListener("click", () => ouvrir(i));
+  p.addEventListener("keydown", e => (e.key === "Enter" || e.key === " ") && ouvrir(i));
+  svg.append(p);
+  return p;
+});
+function majCadres() {
+  polys.forEach((p, i) => {
+    p.classList.toggle("vu", i < progres);
+    p.classList.toggle("suivant", i === progres);
+    p.setAttribute("tabindex", i <= progres ? "0" : "-1");
+  });
+}
+
+// ---------- dialogue ----------
+function parler(lignes, ensuite) {
+  file = [...lignes]; apres = ensuite;
+  $("#dialogue").classList.add("on");
+  suivante();
+}
+function suivante() {
+  if (!file.length) { $("#dialogue").classList.remove("on"); return apres && apres(); }
+  const [qui, texte] = file.shift();
+  $("#bulle .nom").textContent = NOMS[qui];
+  $("#bulle .texte").textContent = texte.replace(/ ([!?:;»])/g, " $1").replace(/« /g, "« ");
+  document.querySelectorAll("#trio img").forEach(img => img.classList.toggle("parle", img.dataset.qui === qui));
+}
+$("#dialogue").addEventListener("click", suivante);
+addEventListener("keydown", e => {
+  if ($("#dialogue").classList.contains("on") && ["Enter", " ", "ArrowRight"].includes(e.key)) { e.preventDefault(); suivante(); }
+});
+
+// ---------- zoom sur un cadre ----------
+function zoomer(i) {
+  if (i == null) { monde.style.transform = ""; return; }
+  const xs = CADRES[i].map(p => p[0] / 736), ys = CADRES[i].map(p => p[1] / 414);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const W = scene.clientWidth, H = scene.clientHeight, s = Math.min(.55 / (x1 - x0), .55 / (y1 - y0));
+  const cx = (x0 + x1) / 2 * W, cy = (y0 + y1) / 2 * H;
+  monde.style.transform = `translate(${W / 2 - cx * s}px, ${H / 2 - cy * s}px) scale(${s})`;
+}
+function ouvrir(i) {
+  if (i > progres || $("#histoire").classList.contains("on")) return;
+  const o = OEUVRES[i];
+  zoomer(i);
+  $("#oeuvre img").src = `img/oeuvres/${i + 1}.jpg`;
+  $("#oeuvre img").alt = o.titre;
+  $("#oeuvre .chapitre").textContent = `Tableau ${i + 1} · ${o.chapitre}`;
+  $("#oeuvre h2").textContent = o.titre;
+  $("#oeuvre .infos").textContent = o.infos;
+  setTimeout(() => {
+    $("#histoire").classList.add("on");
+    parler(o.dialogue, () => { $("#retour").classList.add("on"); $("#retour").focus(); });
+  }, 1200);
+  progres = Math.max(progres, i + 1);
+}
+$("#retour").addEventListener("click", () => {
+  $("#retour").classList.remove("on");
+  $("#histoire").classList.remove("on");
+  zoomer(null);
+  majCadres();
+  if (progres === OEUVRES.length && !fini) {
+    fini = true;
+    setTimeout(() => { monde.classList.add("flou"); parler(FINALE, () => $("#fin").classList.add("on")); }, 1400);
+  }
+});
+let fini = false;
+
+// ---------- début / fin ----------
+$("#entrer").addEventListener("click", () => {
+  $("#titre").classList.remove("on");
+  parler(INTRO, () => { monde.classList.remove("flou"); majCadres(); });
+});
+$("#recommencer").addEventListener("click", () => {
+  progres = 0; fini = false;
+  $("#fin").classList.remove("on");
+  monde.classList.add("flou");
+  majCadres();
+  parler(INTRO.slice(-1), () => { monde.classList.remove("flou"); majCadres(); });
+});
+monde.classList.add("flou");
+
+// ---------- la main ----------
+const main = $("#main");
+addEventListener("pointermove", e => {
+  main.style.left = e.clientX + "px"; main.style.top = e.clientY + "px"; main.style.opacity = 1;
+  main.classList.toggle("survol", !!e.target.closest(".cadre.vu, .cadre.suivant, button, #dialogue.on"));
+});
+addEventListener("pointerdown", () => main.classList.add("clic"));
+addEventListener("pointerup", () => main.classList.remove("clic"));
+document.documentElement.addEventListener("pointerleave", () => main.style.opacity = 0);
+document.documentElement.addEventListener("pointerenter", () => main.style.opacity = 1);
+
+// ---------- poussière lumineuse ----------
+for (let k = 0; k < 28; k++) {
+  const d = document.createElement("span");
+  d.className = "poussiere";
+  d.style.left = Math.random() * 100 + "%";
+  d.style.top = 40 + Math.random() * 60 + "%";
+  d.style.animationDuration = 9 + Math.random() * 10 + "s";
+  d.style.animationDelay = -Math.random() * 18 + "s";
+  monde.append(d);
+}
+</script>
+</body>
+</html>
